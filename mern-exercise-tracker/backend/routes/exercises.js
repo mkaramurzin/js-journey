@@ -1,3 +1,5 @@
+const User = require('../models/user.model');
+
 const router = require('express').Router();
 let Exercise = require('../models/exercise.model');
 
@@ -10,24 +12,31 @@ router.route('/').get((req, res) => {
 
 // POST: Add a new exercise
 router.route('/add').post((req, res) => {
-    const user = req.body.user;
-    const description = req.body.description;
-    const duration = Number(req.body.duration);
-    const date = Date.parse(req.body.date);
-    const sets = req.body.sets ? req.body.sets.map(set => ({ reps: set.reps, weight: set.weight })) : [];
+  const username = req.body.username; // expect username from frontend
+  const description = req.body.description;
+  const duration = Number(req.body.duration);
+  const date = Date.parse(req.body.date);
+  const sets = req.body.sets ? req.body.sets.map(set => ({ reps: set.reps, weight: set.weight })) : [];
 
-    const newExercise = new Exercise({
-        user,
-        description,
-        duration,
-        date,
-        sets
-    });
+  // find the user by username
+  User.findOne({ username: username })
+      .then((user) => {
+          // create the new exercise
+          const newExercise = new Exercise({
+              user: user._id, // use the user's ObjectId here
+              description,
+              duration,
+              date,
+              sets
+          });
 
-    newExercise.save()
-        .then(() => res.json('Exercise added!'))
-        .catch(err => res.status(400).json('Error: ' + err));
-});  
+          // save the exercise
+          newExercise.save()
+              .then(() => res.json('Exercise added!'))
+              .catch(err => res.status(400).json('Error: ' + err));
+      })
+      .catch(err => res.status(400).json('Error: ' + err));
+});
 
 // GET: Get exercise by id
 router.route('/:id').get((req, res) => {
